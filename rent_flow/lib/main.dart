@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'screens/home_screen.dart'; // Import file bạn vừa tạo
 
 void main() {
   runApp(const MyApp());
@@ -7,23 +8,15 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Rent Flow',
+      title: 'Quản Lý Nhà Trọ',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        primarySwatch: Colors.teal,
       ),
-      home: const Scaffold(
-        
-        body: Center(
-          child: Text(
-            'Rent Flow',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ),
+      home: HomeScreen(), // Trỏ thẳng vào HomeScreen
+      debugShowCheckedModeBanner: false, // Tắt chữ DEBUG góc phải
     );
   }
 }
