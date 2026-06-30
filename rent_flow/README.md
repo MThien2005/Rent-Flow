@@ -48,7 +48,6 @@ Quyền truy cập hạn chế (Chỉ xem - View Only) nhằm đảm bảo tính
 
 Dự án sử dụng cơ sở dữ liệu NoSQL với cấu trúc phân cấp linh hoạt:
 
-```text
 Owner (User)
  └── House
       └── Room
