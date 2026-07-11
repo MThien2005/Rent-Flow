@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:rent_flow/screens/room_list_screen.dart';
+import 'package:rent_flow/models/house_model.dart'; 
+import 'package:rent_flow/screens/add_house_screen.dart'; 
 
-class HomeScreen extends StatelessWidget {
-  HomeScreen({super.key});
-  final List mockHouse = [
-    {
-      'id': 'h1',
-      'name': 'Nhà Tạ Quang Bửu',
-      'address': '735 Tạ Quang Bửu, Phường 4, Quận 8',
-      'roomCount': 14,
-      'availableCount': 3,
-    },
-    {
-      'id': 'h2',
-      'name': 'Nhà Khánh Hội',
-      'address': '12 Khánh Hội, Phường 3, Quận 4',
-      'roomCount': 19,
-      'availableCount': 0,
-    },
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // 📌 Khởi tạo dữ liệu. Thuộc tính roomCount lúc này chỉ là tượng trưng, 
+  // vì ta sẽ đếm thực tế bằng code ở hàm build.
+  final List<HouseModel> mockHouses = [
+    HouseModel(
+      id: 'h1',
+      name: 'Nhà Tạ Quang Bửu',
+      address: '735 Tạ Quang Bửu, Phường 4, Quận 8',
+      roomCount: 0, 
+    ),
+    HouseModel(
+      id: 'h2',
+      name: 'Nhà Khánh Hội',
+      address: '12 Khánh Hội, Phường 3, Quận 4',
+      roomCount: 0,
+    ),
   ];
 
   @override
@@ -34,8 +42,21 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          print("chuyen sang man hinh them tro");
+        onPressed: () async{
+          final newHouse = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddHouseScreen(), 
+            ),
+          );
+          if(newHouse != null && newHouse is HouseModel){
+            setState(() {
+              mockHouses.add(newHouse);
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Đã thêm khu nhà ${newHouse.name} thành công!')),
+            );
+          }
         },
         backgroundColor: const Color(0xff1a1a1a),
         icon: const Icon(Icons.add_business, color: Colors.white),
@@ -47,7 +68,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Hàm vẽ khu vực Header mới (Lời chào + Search Bar)
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.only(
@@ -59,7 +79,6 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- DÒNG 1: LỜI CHÀO & NÚT CHUÔNG ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -86,8 +105,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
-              // Nút chuông thông báo
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -108,9 +125,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-
-          const SizedBox(height: 24), // Tạo không gian thở trước thanh Search
-          // --- DÒNG 2: THANH TÌM KIẾM (SEARCH BAR) ---
+          const SizedBox(height: 24),
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -128,20 +143,15 @@ class HomeScreen extends StatelessWidget {
                 hintText: 'Tìm kiếm khu nhà...',
                 hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
-
-                // Thêm icon Lọc (Filter) ở cuối thanh search nhìn rất Pro
                 suffixIcon: Container(
                   margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors
-                        .black87, // Nút màu đen tone-sur-tone với nút Thêm nhà
+                    color: Colors.black87,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.tune, color: Colors.white, size: 18),
                 ),
-
-                border: InputBorder
-                    .none, // Ẩn đường kẻ xấu xí mặc định của TextField
+                border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 16,
@@ -157,46 +167,68 @@ class HomeScreen extends StatelessWidget {
   Widget _buildHouseList() {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: mockHouse.length,
+      itemCount: mockHouses.length,
       itemBuilder: (context, index) {
-        final house = mockHouse[index];
-        final bool hasAvailable = house['availableCount'] > 0;
+        final house = mockHouses[index]; 
+        
+        // 📌 TÍNH TOÁN DỮ LIỆU ĐỘNG TỪ globalMockRooms
+        final roomsOfThisHouse = globalMockRooms.where((r) => r.houseId == house.id).toList();
+        final actualRoomCount = roomsOfThisHouse.length;
+        final actualAvailableCount = roomsOfThisHouse.where((r) => !r.isRented).length;
+
+        // Xử lý UI linh hoạt theo số phòng đếm được
+        Color tagColor;
+        Color textColor;
+        String tagText;
+
+        if (actualRoomCount == 0) {
+          tagColor = Colors.grey.shade100;
+          textColor = Colors.grey.shade700;
+          tagText = '🏠 Chưa có phòng nào';
+        } else if (actualAvailableCount > 0) {
+          tagColor = Colors.green.shade50;
+          textColor = Colors.green.shade700;
+          tagText = '🟢 Trống $actualAvailableCount/$actualRoomCount phòng';
+        } else {
+          tagColor = Colors.red.shade50;
+          textColor = Colors.red.shade700;
+          tagText = '🔴 Đã kín $actualRoomCount phòng';
+        }
+
         return Container(
           margin: const EdgeInsets.only(bottom: 20),
-          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Colors.black.withOpacity(0.04),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
-
           child: Material(
             color: Colors.transparent, 
             child: InkWell(
-              borderRadius: BorderRadius.circular(
-                20,
-              ),
-              onTap: () {
-                Navigator.push(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () async {
+                // 📌 Dùng await để màn hình đứng đợi ở đây
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
-                        RoomListScreen(houseName: house['name']),
+                        RoomListScreen(houseName: house.name, houseId: house.id), 
                   ),
                 );
+                // 📌 Khi quay lại từ RoomListScreen, gọi setState để tải lại số phòng mới nhất
+                setState(() {});
               },
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(20.0), 
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hàng 1: Icon, Tên nhà, Địa chỉ
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -217,7 +249,7 @@ class HomeScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                house['name'],
+                                house.name,
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -225,46 +257,40 @@ class HomeScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                house['address'],
+                                house.address,
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: 14,
                                 ),
                                 maxLines: 1,
-                                overflow: TextOverflow.ellipsis, // Cắt bớt nếu chữ quá dài
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
                         ),
-                        
                       ],
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Divider(height: 1, color: Color(0xffeeeee)),
+                      child: Divider(height: 1, color: Color(0xFFEEEEEE)),
                     ),
                     Row(
                       children: [
+                        // 📌 THẺ HIỂN THỊ ĐỘNG
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: hasAvailable
-                                ? Colors.green[50]
-                                : Colors.red[50],
+                            color: tagColor,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            hasAvailable
-                                ? '🟢 Trống ${house['availableCount']} phòng'
-                                : '🔴 Đã kín phòng',
+                            tagText,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: hasAvailable
-                                  ? Colors.green[700]
-                                  : Colors.red[700],
+                              color: textColor,
                             ),
                           ),
                         ),

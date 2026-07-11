@@ -1,44 +1,80 @@
 import 'package:flutter/material.dart';
+import 'package:rent_flow/models/room_model.dart';
+import 'package:rent_flow/screens/add_room_screen.dart';
+import 'package:rent_flow/screens/room_detail_screen.dart'; 
+
+// 📌 TRỌNG TÂM: Đưa danh sách ra NGOÀI CLASS để nó trở thành Biến Toàn Cục (Global State)
+// Nó sẽ sống trong suốt quá trình app chạy, không bị reset khi thoát màn hình.
+final List<RoomModel> globalMockRooms = [
+  RoomModel(
+    id: 'r1', 
+    houseId: 'h1', 
+    name: 'P.101', 
+    price: 2.5, 
+    isRented: true, 
+    lastElectricIndex: 1200, 
+    lastWaterIndex: 50
+  ),
+];
 
 class RoomListScreen extends StatefulWidget {
-
+  final String houseId;
   final String houseName;
 
-  const RoomListScreen({super.key, required this.houseName});
+  const RoomListScreen({super.key, required this.houseId, required this.houseName});
 
   @override
- State<RoomListScreen> createState() => _RoomListScreenState();
+  State<RoomListScreen> createState() => _RoomListScreenState();
 }
 
 class _RoomListScreenState extends State<RoomListScreen> {
-  final List <Map<String, dynamic>> mockRooms = [
-    {'id': 'r1','name': 'P.101', 'status': 'rented', 'price': '2.5tr', 'tenant': 'Nguyễn Văn A'},
-    {'id': 'r2', 'name': 'P.102', 'status': 'available', 'price': '2.5 Tr', 'tenant': ''},
-    {'id': 'r3', 'name': 'P.103', 'status': 'debt', 'price': '3.0 Tr', 'tenant': 'Trần Thị B'},
-    {'id': 'r4', 'name': 'P.104', 'status': 'rented', 'price': '2.5 Tr', 'tenant': 'Lê Văn C'},
-    {'id': 'r5', 'name': 'P.201', 'status': 'available', 'price': '2.8 Tr', 'tenant': ''},
-    {'id': 'r6', 'name': 'P.202', 'status': 'available', 'price': '2.8 Tr', 'tenant': ''},
-  ];
+  // Đã xóa mockRooms ở đây đi
+
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
+    // 📌 LỌC PHÒNG THEO NHÀ: 
+    // Vì globalMockRooms chứa tất cả phòng của TẤT CẢ các nhà,
+    // ta chỉ lấy ra những phòng thuộc về cái nhà đang được chọn (houseId)
+    final roomsOfThisHouse = globalMockRooms.where((room) => room.houseId == widget.houseId).toList();
+
     return Scaffold(
-      backgroundColor: const Color(0xffff8f9fa),
+      backgroundColor: const Color(0xfff8f9fa), 
       appBar: AppBar(
         title: Text(
           widget.houseName,
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
         ),
-        backgroundColor:  Colors.white,
+        backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.black87),
         elevation: 0.5,
         centerTitle: true,
       ),
+      
       floatingActionButton: FloatingActionButton(
-        onPressed: (){print("chuyển sang màn hình form thêm phòng");},
+        onPressed: () async {
+          final newRoom = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddRoomScreen(houseId: widget.houseId),
+            ),
+          );
+
+          if (newRoom != null) {
+            setState(() {
+              // Thêm phòng mới vào danh sách toàn cục
+              globalMockRooms.add(newRoom as RoomModel); 
+            });
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Đã thêm phòng ${(newRoom as RoomModel).name} thành công!')),
+            );
+          }
+        },
         backgroundColor: const Color(0xff3a86ff),
         elevation: 4,
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
+
       body: Column(
         children: [
           Padding(
@@ -56,17 +92,18 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   )
                 ],
               ),
-              child:  const TextField(
+              child: const TextField(
                 decoration: InputDecoration(
                   hintText: 'Tìm số phòng, tên người thuê...',
                   hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
           ),
+
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -76,21 +113,21 @@ class _RoomListScreenState extends State<RoomListScreen> {
                 mainAxisSpacing: 16,
                 childAspectRatio: 0.85,
               ),
-              itemCount: mockRooms.length,
+              // Dùng danh sách đã được lọc theo houseId
+              itemCount: roomsOfThisHouse.length, 
               itemBuilder: (context, index) {
-                final room = mockRooms[index];
+                // Lấy phòng từ danh sách đã lọc
+                final room = roomsOfThisHouse[index]; 
 
                 Color statusColor;
                 String statusText;
-                if(room['status'] == 'available'){
-                  statusColor = const Color(0xff2ec4b6);
-                  statusText = 'Phòng trống';
-                }else if(room['status'] == 'debt'){
-                  statusColor = const Color(0xffe63946);
-                  statusText = 'Đang nợ tiền';
-                }else{
+                
+                if (room.isRented) {
                   statusColor = const Color(0xff457b9d);
                   statusText = 'Đang thuê';
+                } else {
+                  statusColor = const Color(0xff2ec4b6);
+                  statusText = 'Phòng trống';
                 }
                 
                 return Container(
@@ -103,8 +140,13 @@ class _RoomListScreenState extends State<RoomListScreen> {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: (){
-                        print("Xem chi tiết phòng ${room['name']}");
+                      onTap: () {
+                        /*Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RoomDetailScreen(room: room),
+                          ),
+                        );*/
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(12),
@@ -120,10 +162,10 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        Icon(Icons.door_front_door, color: statusColor, size: 20,),
-                                        const SizedBox(width: 6,),
+                                        Icon(Icons.door_front_door, color: statusColor, size: 20),
+                                        const SizedBox(width: 6),
                                         Text(
-                                          room['name'],
+                                          room.name,
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
@@ -132,27 +174,31 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                         )
                                       ],
                                     ),
+                                    
                                     SizedBox(
                                       width: 24,
                                       child: PopupMenuButton<String>(
                                         padding: EdgeInsets.zero,
-                                        icon: const Icon(Icons.more_vert, color: Colors.grey, size: 20,),
-                                        onSelected: (value){
-                                          if(value == 'edit'){
+                                        icon: const Icon(Icons.more_vert, color: Colors.grey, size: 20),
+                                        onSelected: (value) {
+                                          if (value == 'edit') {
+                                            print("Sửa phòng ${room.name}");
+                                          } else if (value == 'delete') {
                                             setState(() {
-                                              mockRooms.removeAt(index);
+                                              // Xóa khỏi danh sách toàn cục
+                                              globalMockRooms.removeWhere((r) => r.id == room.id);
                                             });
-                                            print("Đã xóa phòng ${room['name']}");
+                                            print("Đã xóa phòng ${room.name}");
                                           }
                                         },
                                         itemBuilder: (BuildContext context) => [
                                           const PopupMenuItem(
-                                            value: 'delete',
+                                            value: 'edit',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.edit_outlined, size: 18,),
-                                                SizedBox(width: 8,),
-                                                Text("sửa thông tin"),
+                                                Icon(Icons.edit_outlined, size: 18),
+                                                SizedBox(width: 8),
+                                                Text("Sửa thông tin"),
                                               ],
                                             ),
                                           ),
@@ -171,13 +217,14 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                     )
                                   ],
                                 ),
-                                const SizedBox( height: 8,),
+                                const SizedBox(height: 8),
+                                
                                 Row(
                                   children: [
-                                    Icon(Icons.payment_outlined, size: 16, color: Colors.grey[600]),
-                                    const SizedBox(width: 6,),
+                                    Icon(Icons.payments_outlined, size: 16, color: Colors.grey[600]),
+                                    const SizedBox(width: 6),
                                     Text(
-                                      room['price'],
+                                      '${room.price} Tr', 
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
@@ -188,18 +235,20 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                 ),
                               ],
                             ),
-                            Divider( color: statusColor.withValues(alpha: 0.2), height: 16),
+                            
+                            Divider(color: statusColor.withValues(alpha: 0.2), height: 16),
+                            
                             Column(
-                              crossAxisAlignment:  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if(room['tenant'] != '') ...[
+                                if (room.isRented) ...[
                                   Row(
                                     children: [
-                                      Icon(Icons.person, size: 16, color:  Colors.grey[600]),
+                                      Icon(Icons.person, size: 16, color: Colors.grey[600]),
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
-                                          room['tenant'],
+                                          'Đã có khách thuê',
                                           style: TextStyle(
                                             color: Colors.grey[700],
                                             fontSize: 13,
@@ -211,14 +260,15 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                       )
                                     ],
                                   ),
-                                  const SizedBox(height: 8,),
+                                  const SizedBox(height: 8),
                                 ],
+                                
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(vertical: 6),
                                   decoration: BoxDecoration(
                                     color: statusColor,
-                                    borderRadius:  BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
                                   alignment: Alignment.center,
                                   child: Text(
