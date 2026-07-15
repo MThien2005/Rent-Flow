@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rent_flow/screens/room_list_screen.dart';
 import 'package:rent_flow/models/house_model.dart'; 
 import 'package:rent_flow/screens/add_house_screen.dart'; 
+import 'package:rent_flow/screens/edit_house_screen.dart'; // 📌 1. ĐÃ THÊM IMPORT MÀN HÌNH SỬA
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -268,6 +269,64 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
+                        // 📌 2. ĐÃ THÊM NÚT MENU SỬA/XÓA VÀO ĐÂY (Nằm cạnh Expanded)
+                        SizedBox(
+                          width: 32,
+                          child: PopupMenuButton<String>(
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.more_vert, color: Colors.grey),
+                            onSelected: (value) async {
+                              if (value == 'edit') {
+                                // Mở màn hình sửa và chờ kết quả
+                                final updatedHouse = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditHouseScreen(house: house),
+                                  ),
+                                );
+
+                                // Nếu sửa thành công, load lại giao diện
+                                if (updatedHouse != null) {
+                                  setState(() {});
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Đã cập nhật ${house.name}!')),
+                                  );
+                                }
+                              } else if (value == 'delete') {
+                                // Logic xóa nhà
+                                setState(() {
+                                  mockHouses.removeWhere((h) => h.id == house.id);
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Đã xóa khu nhà!')),
+                                );
+                              }
+                            },
+                            itemBuilder: (BuildContext context) => [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.edit_outlined, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Sửa thông tin'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Xóa khu nhà', style: TextStyle(color: Colors.red)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // 📌 KẾT THÚC PHẦN NÚT 3 CHẤM
                       ],
                     ),
                     const Padding(
