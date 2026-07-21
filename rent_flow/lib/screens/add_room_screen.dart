@@ -155,7 +155,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                 child: ElevatedButton(
                   onPressed: _saveRoom,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff3a86ff),
+                    backgroundColor:  Colors.blueGrey,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('LƯU PHÒNG', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white ),),

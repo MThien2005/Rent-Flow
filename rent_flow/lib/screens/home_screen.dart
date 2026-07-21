@@ -293,13 +293,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                   );
                                 }
                               } else if (value == 'delete') {
-                                // Logic xóa nhà
-                                setState(() {
-                                  mockHouses.removeWhere((h) => h.id == house.id);
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Đã xóa khu nhà!')),
-                                );
+                                // 1. Hiện hộp thoại xác nhận và chờ người dùng lựa chọn
+                                final isConfirmed = await _showConfirmDeleteDialog(context, house.name);
+                                
+                                // 2. Nếu người dùng chọn "Xóa" (true), tiến hành xóa dữ liệu
+                                if (isConfirmed == true) {
+                                  setState(() {
+                                    mockHouses.removeWhere((h) => h.id == house.id);
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Đã xóa khu nhà thành công!'),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
                               }
                             },
                             itemBuilder: (BuildContext context) => [
@@ -364,4 +372,62 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+}
+
+Future <bool?> _showConfirmDeleteDialog(BuildContext context, String houseName){
+  return showDialog<bool>(
+    context: context,
+    barrierDismissible: false, 
+    builder: (BuildContext context){
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28,),
+            SizedBox(width: 10,),
+            Text(
+              'Xác nhận xóa',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          'Bạn có chắc chắn muốn xóa khu nhà "$houseName" không?\n Hành động này không thể hoàn tác.',
+          style: TextStyle(fontSize: 15, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Hủy',
+                style: TextStyle(
+                  color: Colors.black, 
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            ),
+             child: const Text(
+              'Xóa',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+             ),
+          ),
+        ],
+      );
+    },
+  );
 }

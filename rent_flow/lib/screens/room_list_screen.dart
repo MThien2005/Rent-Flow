@@ -70,7 +70,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
             );
           }
         },
-        backgroundColor: const Color(0xff3a86ff),
+        backgroundColor: Colors.blueGrey,
         elevation: 4,
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
@@ -141,12 +141,12 @@ class _RoomListScreenState extends State<RoomListScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
                       onTap: () {
-                        /*Navigator.push(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => RoomDetailScreen(room: room),
                           ),
-                        );*/
+                        );
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(12),
