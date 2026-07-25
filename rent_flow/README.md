@@ -96,3 +96,5 @@ Phần này gắn trực tiếp với hệ thống Đăng nhập của Firebase.
 * **7. `UserModel` (Chủ trọ):** Nắm quyền cao nhất (`ownerId`). Tất cả các Nhà (`HouseModel`) đều phải chứa cái `ownerId` này để chủ trọ chỉ nhìn thấy nhà của mình, không thấy nhà của người khác.
 
 ---
+kế hoạch tiếp theo là bấm trả phòng thì số điện chốt sẽ được thay thế số điện củ 
+code logic cho sửa thông tin khách

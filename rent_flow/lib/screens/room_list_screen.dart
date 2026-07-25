@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rent_flow/models/room_model.dart';
 import 'package:rent_flow/screens/add_room_screen.dart';
+import 'package:rent_flow/screens/edit_room_screen.dart';
 import 'package:rent_flow/screens/room_detail_screen.dart'; 
 
 // 📌 TRỌNG TÂM: Đưa danh sách ra NGOÀI CLASS để nó trở thành Biến Toàn Cục (Global State)
@@ -70,7 +71,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
             );
           }
         },
-        backgroundColor: Colors.blueGrey,
+        backgroundColor: Colors.black87,
         elevation: 4,
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
@@ -140,13 +141,14 @@ class _RoomListScreenState extends State<RoomListScreen> {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        Navigator.push(
+                      onTap: () async {
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => RoomDetailScreen(room: room),
                           ),
                         );
+                        setState(() {});
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(12),
@@ -180,15 +182,24 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                       child: PopupMenuButton<String>(
                                         padding: EdgeInsets.zero,
                                         icon: const Icon(Icons.more_vert, color: Colors.grey, size: 20),
-                                        onSelected: (value) {
+                                        onSelected: (value) async {
                                           if (value == 'edit') {
-                                            print("Sửa phòng ${room.name}");
-                                          } else if (value == 'delete') {
-                                            setState(() {
-                                              // Xóa khỏi danh sách toàn cục
-                                              globalMockRooms.removeWhere((r) => r.id == room.id);
-                                            });
-                                            print("Đã xóa phòng ${room.name}");
+                                            // Điều hướng sang trang EditRoomScreen
+                                            final updatedRoom = await Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => EditRoomScreen(room: room),
+                                              ),
+                                            );
+                                            // Nếu có cập nhật thành công thì build lại UI
+                                            if (updatedRoom != null) {
+                                              setState(() {});
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text('Cập nhật phòng ${room.name} thành công!')),
+                                                );
+                                              }
+                                            }
                                           }
                                         },
                                         itemBuilder: (BuildContext context) => [
