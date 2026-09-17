@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:rent_flow/models/bill_model.dart';
 import 'package:rent_flow/models/contract_model.dart';
 import 'package:rent_flow/models/renter_model.dart';
 import 'package:rent_flow/models/room_model.dart';
 import 'package:rent_flow/screens/add_tenant_screen.dart';
+import 'package:rent_flow/screens/bill_detail_screen.dart';
 import 'package:rent_flow/screens/checkout_screen.dart';
+import 'package:rent_flow/screens/create_bill_screen.dart';
+import 'package:rent_flow/screens/edit_tenant_screen.dart';
 
 class RoomDetailScreen extends StatefulWidget {
   final RoomModel room;
@@ -77,6 +81,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           if (widget.room.isRented && hasContract)
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.black87),
+              color: Colors.white,
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(16)),
               onSelected: (value) async {
                 if (value == 'edit_renter') {
                   if (currentRenter != null && currentContract != null) {
@@ -136,7 +143,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               ),
 
               const SizedBox(height: 12),
-              _buildTenantCard(currentRenter!),
+              _buildTenantCard(currentRenter!, currentContract!),
               const SizedBox(height: 24),
             ],
             const Text(
@@ -269,40 +276,69 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
-  Widget _buildTenantCard(RenterModel renter) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: Colors.blue.shade50,
-            radius: 24,
-            child: Icon(Icons.person, color: Colors.blue.shade600),
+  // 📌 Nhớ truyền thêm currentContract vào hàm này nếu bạn lưu nó ở State nhé
+  Widget _buildTenantCard(RenterModel renter, ContractModel contract) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () async {
+        // 📌 KHI BẤM VÀO THẺ: Chuyển sang màn hình hiển thị & sửa thông tin
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditTenantScreen(
+              renter: renter,
+              contract: contract,
+            ),
           ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                renter.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+        );
+
+        // 📌 Nếu lưu thành công, vẽ lại UI để hiện Tên/SĐT mới
+        if (result != null) {
+          setState(() {}); 
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Đã cập nhật thông tin khách thuê thành công!')),
+            );
+          }
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+          // Thêm chút đổ bóng nhẹ cho đẹp
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: Colors.blue.shade50,
+              radius: 24,
+              child: Icon(Icons.person, color: Colors.blue.shade600),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(renter.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(renter.phone, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                renter.phone,
-                style: const TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-            ],
-          ),
-        ],
+            ),
+            // Thêm Icon cây bút nhỏ bên góc phải
+            Icon(Icons.edit_note_rounded, color: Colors.grey.shade400, size: 28),
+          ],
+        ),
       ),
     );
   }
@@ -435,7 +471,19 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   );
                 }
               }
-            } else {
+            } else {             
+                // 📌 CHUYỂN SANG MÀN HÌNH NHẬP SỐ MỚI ĐỂ LẬP HÓA ĐƠN
+               await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CreateBillScreen(
+                    room: widget.room, 
+                    contract: currentContract!, // Đã đảm bảo not null nhờ nhánh if
+                  ),
+                ),
+              );
+              setState(() {
+              });
               // TODO: Xử lý Lập hóa đơn
             }
           },

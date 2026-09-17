@@ -56,6 +56,9 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
           renterId: renterId,
           deposit: 0,
           startDate: _startDate,
+          elecUnitPrice: 3000,
+          waterUnitPrice: 35000,
+          serviceFee: 150000,
         );
 
         contract.deposit = double.parse(_depositController.text.trim());
